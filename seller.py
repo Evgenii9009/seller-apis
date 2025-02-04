@@ -12,7 +12,27 @@ logger = logging.getLogger(__file__)
 
 
 def get_product_list(last_id, client_id, seller_token):
-    """Получить список товаров магазина озон"""
+    """Get products list from OZON website
+
+    Args:
+        last_id (str): ID of previous product which was downloaded
+        client_id (str): Client ID for OZON
+        seller_token (str): Seller token fro OZON
+
+    Results:
+       response_object.get("result") (dict): data about product from OZON
+
+    Raises: 
+        HTTPError: If response with code 4xx or 5xx
+        ConnectionError: If problems with connection to the website
+
+    Example:
+        >>> last_id = ""
+        >>> client_id = env.str("CLIENT_ID")
+        >>> seller_token = env.str("SELLER_TOKEN")
+        >>> get_product_list(last_id, client_id, seller_token)
+        response_object.get("result")
+    """
     url = "https://api-seller.ozon.ru/v2/product/list"
     headers = {
         "Client-Id": client_id,
@@ -32,7 +52,25 @@ def get_product_list(last_id, client_id, seller_token):
 
 
 def get_offer_ids(client_id, seller_token):
-    """Получить артикулы товаров магазина озон"""
+    """Get goods IDs from OZON website
+    
+    Args:
+        client_id (str): Client ID for OZON
+        seller_token (str): Seller token fro OZON
+
+    Returns:
+        offer_ids (list): list of goods IDs from OZON
+
+    Raises: 
+        HTTPError: If response with code 4xx or 5xx
+        ConnectionError: If problems with connection to the website
+    
+    Example:
+        >>> seller_token = env.str("SELLER_TOKEN")
+        >>> client_id = env.str("CLIENT_ID")
+        >>> get_offer_ids(client_id, seller_token)
+        ['73397', '73398', '73399']
+    """
     last_id = ""
     product_list = []
     while True:
@@ -49,7 +87,28 @@ def get_offer_ids(client_id, seller_token):
 
 
 def update_price(prices: list, client_id, seller_token):
-    """Обновить цены товаров"""
+    """
+    Updates prices for goods on OZON website
+
+    Args:
+        prices (list): List of prices on watches
+        client_id (str): Client ID for OZON
+        seller_token (str): Seller token fro OZON
+
+    Returns:
+        response.json() (dict): Dict with response from OZON
+
+    Raises:
+        HTTPError: If response with code 4xx or 5xx
+        ConnectionError: If problems with connection to the website
+
+    Example:
+        >>> prices = [{'auto_action_enabled': 'UNKNOWN', 'currency_code': 'RUB', 'offer_id': '73397', 'old_price': '0', 'price': '22990'}]
+        >>> seller_token = env.str("SELLER_TOKEN")
+        >>> client_id = env.str("CLIENT_ID")
+        >>> update_price(prices, client_id, seller_token)
+        response.json()
+    """
     url = "https://api-seller.ozon.ru/v1/product/import/prices"
     headers = {
         "Client-Id": client_id,
@@ -62,7 +121,27 @@ def update_price(prices: list, client_id, seller_token):
 
 
 def update_stocks(stocks: list, client_id, seller_token):
-    """Обновить остатки"""
+    """Uploads stocks to the OZON website
+
+    Args:
+        stocks (list): List of watches stocks
+        client_id (str): Client ID for OZON
+        seller_token (str): Seller token fro OZON
+    
+    Returns:
+        response.json() (dict): Dict with response from OZON
+
+    Raises:
+        HTTPError: If response with code 4xx or 5xx
+        ConnectionError: If problems with connection to the website
+
+    Example:
+        >>> stocks = [{'offer_id': '73397', 'stock': 100}, {'offer_id': '73398', 'stock': 0}, {'offer_id': '73399', 'stock': 0}]
+        >>> seller_token = env.str("SELLER_TOKEN")
+        >>> client_id = env.str("CLIENT_ID")
+        >>> update_stocks(stocks, client_id, seller_token)
+        response.json()
+    """
     url = "https://api-seller.ozon.ru/v1/product/import/stocks"
     headers = {
         "Client-Id": client_id,
@@ -75,15 +154,28 @@ def update_stocks(stocks: list, client_id, seller_token):
 
 
 def download_stock():
-    """Скачать файл ostatki с сайта casio"""
-    # Скачать остатки с сайта
+    """
+    Download xls-file with watches and converts it to list of dicts
+
+    Returns:
+        watch_remnants (list):  List of dicts, every dict contains data about one watch
+
+    Raises:
+        HTTPError: If response with code 4xx or 5xx
+        ConnectionError: If problems with connection to the website
+
+    Example:
+        >>> download_stocks()
+        [{'Код': 73397, 'Наименование товара': 'BA-110FH-2A',
+        'Изображение': 'http://www.timeworld.ru/products/itshow.php?id=73397',
+        'Цена': "22'990.00 руб.", 'Количество': '>10'}]
+    """
     casio_url = "https://timeworld.ru/upload/files/ostatki.zip"
     session = requests.Session()
     response = session.get(casio_url)
     response.raise_for_status()
     with response, zipfile.ZipFile(io.BytesIO(response.content)) as archive:
         archive.extractall(".")
-    # Создаем список остатков часов:
     excel_file = "ostatki.xls"
     watch_remnants = pd.read_excel(
         io=excel_file,
@@ -91,12 +183,29 @@ def download_stock():
         keep_default_na=False,
         header=17,
     ).to_dict(orient="records")
-    os.remove("./ostatki.xls")  # Удалить файл
+    os.remove("./ostatki.xls")
     return watch_remnants
 
 
 def create_stocks(watch_remnants, offer_ids):
-    # Уберем то, что не загружено в seller
+    """
+    Calculate amounts of stocks of watches by data from casio and OZON
+
+    Args:
+        watch_remnants (dict): Watches data from casio website
+        offer_ids (list): List with ids from OZON
+    
+    Returns:
+        stocks (list): List of dicts, every dict contains OZON id and amount of watches for this id
+
+    Example:
+        >>> watch_remnants = [{'Код': 73397, 'Наименование товара': 'BA-110FH-2A',
+                            'Изображение': 'http://www.timeworld.ru/products/itshow.php?id=73397',
+                            'Цена': "22'990.00 руб.", 'Количество': '>10'}]
+        >>> offer_ids = [73397, 73398, 73399]
+        >>> create_prices(watch_remnants, offer_ids)
+        [{'offer_id': '73397', 'stock': 100}, {'offer_id': '73398', 'stock': 0}, {'offer_id': '73399', 'stock': 0}]        
+    """
     stocks = []
     for watch in watch_remnants:
         if str(watch.get("Код")) in offer_ids:
@@ -109,13 +218,30 @@ def create_stocks(watch_remnants, offer_ids):
                 stock = int(watch.get("Количество"))
             stocks.append({"offer_id": str(watch.get("Код")), "stock": stock})
             offer_ids.remove(str(watch.get("Код")))
-    # Добавим недостающее из загруженного:
     for offer_id in offer_ids:
         stocks.append({"offer_id": offer_id, "stock": 0})
     return stocks
 
 
 def create_prices(watch_remnants, offer_ids):
+    """
+    Creates prices with conversion from watches data if watch number is in OZON ids
+
+    Args:
+        watch_remnants (dict): Watches data from casio website
+        offer_ids (list): List with ids from OZON
+
+    Returns:
+        prices (list): List of dicts, every dict contains data about watch price for OZON
+
+    Example:
+        >>> watch_remnants = [{'Код': 73397, 'Наименование товара': 'BA-110FH-2A',
+                            'Изображение': 'http://www.timeworld.ru/products/itshow.php?id=73397',
+                            'Цена': "22'990.00 руб.", 'Количество': '>10'}]
+        >>> offer_ids = [73397, 73398, 73399]
+        >>> create_prices(watch_remnants, offer_ids)
+    [{'auto_action_enabled': 'UNKNOWN', 'currency_code': 'RUB', 'offer_id': '73397', 'old_price': '0', 'price': '22990'}]
+    """
     prices = []
     for watch in watch_remnants:
         if str(watch.get("Код")) in offer_ids:
@@ -146,7 +272,7 @@ def price_conversion(price: str) -> str:
     Example:
         >>> price = '5'990.00 руб.'
         >>> price_conversion(price)
-        '5990'   
+        '5990'
    """
     return re.sub("[^0-9]", "", price.split(".")[0])
 
@@ -162,8 +288,6 @@ def divide(lst: list, n: int):
     Returns:
         lst: One part of the initial list, contains n elements
 
-    Raises:
-
     Example:
         >>> lst = [1, 2, 3, 4]
         >>> n = 1
@@ -173,10 +297,33 @@ def divide(lst: list, n: int):
         2
     """
     for i in range(0, len(lst), n):
-        yield lst[i : i + n]
+        yield lst[i: i + n]
 
 
 async def upload_prices(watch_remnants, client_id, seller_token):
+    """
+    Gets the IDs from OZON, gets prices from watch_remnants, update prices on OZON 
+    Args:
+        watch_remnants (dict): Watches data from casio website
+        client_id (str): Client ID for OZON
+        seller_token (str): Seller token fro OZON
+
+    Returns:
+        prices (list): List of dicts, every dict contains data about watch price for OZON
+
+    Raises:
+        HTTPError: If response with code 4xx or 5xx
+        ConnectionError: If problems with connection to the website
+
+    Example:
+        >>> watch_remnants = [{'Код': 73397, 'Наименование товара': 'BA-110FH-2A',
+                            'Изображение': 'http://www.timeworld.ru/products/itshow.php?id=73397',
+                            'Цена': "22'990.00 руб.", 'Количество': '>10'}]
+        >>> seller_token = env.str("SELLER_TOKEN")
+        >>> client_id = env.str("CLIENT_ID")
+        >>> upload_prices(watch_remnants, client_id, seller_token)
+        [{'auto_action_enabled': 'UNKNOWN', 'currency_code': 'RUB', 'offer_id': '73397', 'old_price': '0', 'price': '22990'}]
+    """
     offer_ids = get_offer_ids(client_id, seller_token)
     prices = create_prices(watch_remnants, offer_ids)
     for some_price in list(divide(prices, 1000)):
@@ -185,6 +332,30 @@ async def upload_prices(watch_remnants, client_id, seller_token):
 
 
 async def upload_stocks(watch_remnants, client_id, seller_token):
+    """
+    Gets the IDs from OZON, gets stocks from watch_remnants, update stocks on OZON
+    Args:
+        watch_remnants (dict): Watches data from casio website
+        client_id (str): Client ID for OZON
+        seller_token (str): Seller token fro OZON
+    
+    Returns:
+        not_empty (list): List of stocks, except for those that =0
+        stocks (list): List of dicts, every dict contains OZON id and amount of watches for this id
+    
+    Raises:
+        HTTPError: If response with code 4xx or 5xx
+        ConnectionError: If problems with connection to the website
+    
+    Example:
+        >>> watch_remnants = [{'Код': 73397, 'Наименование товара': 'BA-110FH-2A',
+                            'Изображение': 'http://www.timeworld.ru/products/itshow.php?id=73397',
+                            'Цена': "22'990.00 руб.", 'Количество': '>10'}]
+        >>> seller_token = env.str("SELLER_TOKEN")
+        >>> client_id = env.str("CLIENT_ID")
+        >>> upload_stocks(watch_remnants, client_id, seller_token)
+        [{'offer_id': '73397', 'stock': 100}], [{'offer_id': '73398', 'stock': 0}, {'offer_id': '73399', 'stock': 0}]
+    """
     offer_ids = get_offer_ids(client_id, seller_token)
     stocks = create_stocks(watch_remnants, offer_ids)
     for some_stock in list(divide(stocks, 100)):
@@ -194,6 +365,14 @@ async def upload_stocks(watch_remnants, client_id, seller_token):
 
 
 def main():
+    """
+    Gets IDs from OZON, gets stocks from casio website, update prices and stocks on OZON
+
+    Raises:
+        "Превышено время ожидания...": If ReadTimeout
+        "Ошибка соединения": If ConnectionError
+        "ERROR_2": If other errors
+    """
     env = Env()
     seller_token = env.str("SELLER_TOKEN")
     client_id = env.str("CLIENT_ID")
