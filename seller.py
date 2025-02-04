@@ -131,12 +131,47 @@ def create_prices(watch_remnants, offer_ids):
 
 
 def price_conversion(price: str) -> str:
-    """Преобразовать цену. Пример: 5'990.00 руб. -> 5990"""
+    """
+    Converts the price by removing the fractional part and the currency
+
+    Args:
+        price (str): Price from casio website
+
+    Returns:
+        str: String with а replacement of [^0-9] fragment to "" in converted price
+
+    Raises:
+        TypeError: If price is not a string
+
+    Example:
+        >>> price = '5'990.00 руб.'
+        >>> price_conversion(price)
+        '5990'   
+   """
     return re.sub("[^0-9]", "", price.split(".")[0])
 
 
 def divide(lst: list, n: int):
-    """Разделить список lst на части по n элементов"""
+    """
+    Divide the list into parts of n elements, returns one part per run
+
+    Args:
+        lst (list): The list that needs to be divided
+        n (int): Number of elements in one part
+
+    Returns:
+        lst: One part of the initial list, contains n elements
+
+    Raises:
+
+    Example:
+        >>> lst = [1, 2, 3, 4]
+        >>> n = 1
+        >>> divide(lst, n)
+        1
+        >>> divide(lst, n)
+        2
+    """
     for i in range(0, len(lst), n):
         yield lst[i : i + n]
 
