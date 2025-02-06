@@ -203,7 +203,7 @@ def create_stocks(watch_remnants, offer_ids):
                             'Изображение': 'http://www.timeworld.ru/products/itshow.php?id=73397',
                             'Цена': "22'990.00 руб.", 'Количество': '>10'}]
         >>> offer_ids = [73397, 73398, 73399]
-        >>> create_prices(watch_remnants, offer_ids)
+        >>> create_stocks(watch_remnants, offer_ids)
         [{'offer_id': '73397', 'stock': 100}, {'offer_id': '73398', 'stock': 0}, {'offer_id': '73399', 'stock': 0}]        
     """
     stocks = []
@@ -306,7 +306,7 @@ async def upload_prices(watch_remnants, client_id, seller_token):
     Args:
         watch_remnants (dict): Watches data from casio website
         client_id (str): Client ID for OZON
-        seller_token (str): Seller token fro OZON
+        seller_token (str): Seller token for OZON
 
     Returns:
         prices (list): List of dicts, every dict contains data about watch price for OZON
