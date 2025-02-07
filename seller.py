@@ -15,12 +15,12 @@ def get_product_list(last_id, client_id, seller_token):
     """Get products list from OZON website
 
     Args:
-        last_id (str): ID of previous product which was downloaded
+        last_id (str): ID of previous product which was received
         client_id (str): Client ID for OZON
         seller_token (str): Seller token fro OZON
 
     Results:
-       response_object.get("result") (dict): data about product from OZON
+       (dict): Data about product from OZON
 
     Raises: 
         HTTPError: If response with code 4xx or 5xx
@@ -31,7 +31,6 @@ def get_product_list(last_id, client_id, seller_token):
         >>> client_id = env.str("CLIENT_ID")
         >>> seller_token = env.str("SELLER_TOKEN")
         >>> get_product_list(last_id, client_id, seller_token)
-        response_object.get("result")
     """
     url = "https://api-seller.ozon.ru/v2/product/list"
     headers = {
@@ -52,14 +51,14 @@ def get_product_list(last_id, client_id, seller_token):
 
 
 def get_offer_ids(client_id, seller_token):
-    """Get goods IDs from OZON website
+    """Get products IDs from OZON website
     
     Args:
         client_id (str): Client ID for OZON
         seller_token (str): Seller token fro OZON
 
     Returns:
-        offer_ids (list): list of goods IDs from OZON
+        offer_ids (list): list of products IDs from OZON
 
     Raises: 
         HTTPError: If response with code 4xx or 5xx
@@ -88,7 +87,7 @@ def get_offer_ids(client_id, seller_token):
 
 def update_price(prices: list, client_id, seller_token):
     """
-    Updates prices for goods on OZON website
+    Updates prices for products on OZON website
 
     Args:
         prices (list): List of prices on watches
@@ -96,7 +95,7 @@ def update_price(prices: list, client_id, seller_token):
         seller_token (str): Seller token fro OZON
 
     Returns:
-        response.json() (dict): Dict with response from OZON
+        (dict): Dict with response from OZON
 
     Raises:
         HTTPError: If response with code 4xx or 5xx
@@ -129,7 +128,7 @@ def update_stocks(stocks: list, client_id, seller_token):
         seller_token (str): Seller token fro OZON
     
     Returns:
-        response.json() (dict): Dict with response from OZON
+        (dict): Dict with response from OZON
 
     Raises:
         HTTPError: If response with code 4xx or 5xx

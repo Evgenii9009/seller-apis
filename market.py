@@ -19,7 +19,7 @@ def get_product_list(page, campaign_id, access_token):
         access_token (str): Seller token for Yandex Market
 
     Results:
-       response_object.get("result") (dict): data about product from Yandex Market
+       (dict): data about product from Yandex Market
 
     Raises: 
         HTTPError: If response with code 4xx or 5xx
@@ -30,7 +30,6 @@ def get_product_list(page, campaign_id, access_token):
         >>> market_token = env.str("MARKET_TOKEN")
         >>> campaign_fbs_id = env.str("FBS_ID")
         >>> get_product_list((page, campaign_fbs_id, access_token)
-        response_object.get("result")
     """
     endpoint_url = "https://api.partner.market.yandex.ru/"
     headers = {
@@ -59,7 +58,7 @@ def update_stocks(stocks, campaign_id, access_token):
         access_token (str): Seller token for Yandex Market
     
     Returns:
-        response.json() (dict): Dict with response from Yandex Market
+        (dict): Dict with response from Yandex Market
 
     Raises:
         HTTPError: If response with code 4xx or 5xx
@@ -97,7 +96,7 @@ def update_price(prices, campaign_id, access_token):
         access_token (str): Seller token for Yandex Market
 
     Returns:
-        response.json() (dict): Dict with response from Yandex Market
+        (dict): Dict with response from Yandex Market
 
     Raises:
         HTTPError: If response with code 4xx or 5xx
